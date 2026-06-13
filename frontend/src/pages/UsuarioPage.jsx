@@ -12,19 +12,19 @@ const STATUS_LABEL_USUARIO = {
 };
 
 function QueueBadge({ token, ticketId, status }) {
-  const [pos,   setPos]   = useState(null);
-  const [error, setError] = useState(false);
+  const [pos,      setPos]      = useState(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setPos(null);
-    setError(false);
+    setHasError(false);
     if (status === 'resolved') { setPos({ status: 'resolved' }); return; }
     api.getTicketPosition(token, ticketId)
       .then(setPos)
-      .catch(() => setError(true));
+      .catch(() => setHasError(true));
   }, [token, ticketId, status]);
 
-  if (error) return null;
+  if (hasError) return null;
   if (!pos)  return <span className="text-xs text-slate-400 animate-pulse">Calculando posición...</span>;
   if (pos.status === 'resolved') return null;
 
@@ -94,7 +94,7 @@ function TicketNotes({ token, ticketId }) {
 }
 
 function TicketCard({ ticket, token }) {
-  const st = STATUS_LABEL_USUARIO[ticket.status] || STATUS_LABEL_USUARIO.pending;
+  const statusConfig = STATUS_LABEL_USUARIO[ticket.status] || STATUS_LABEL_USUARIO.pending;
   const date = new Date(ticket.created_at).toLocaleDateString('es-MX', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
@@ -119,8 +119,8 @@ function TicketCard({ ticket, token }) {
             </div>
             <p className="text-sm font-semibold text-slate-800 truncate">{ticket.problem_name}</p>
           </div>
-          <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${st.colorClass}`}>
-            {st.label}
+          <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${statusConfig.colorClass}`}>
+            {statusConfig.label}
           </span>
         </div>
 
@@ -206,19 +206,22 @@ export default function UsuarioPage({ session, onLogout }) {
   const selectedProblem = problems.find(problem => problem.id === parseInt(probId));
 
   // --- History state ---
-  const [tickets,        setTickets]        = useState([]);
-  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [tickets,          setTickets]          = useState([]);
+  const [isTicketsLoading, setIsTicketsLoading] = useState(false);
 
   const loadTickets = useCallback(() => {
-    setTicketsLoading(true);
+    setIsTicketsLoading(true);
     api.getTickets(token).then(data => {
       setTickets(data);
-      setTicketsLoading(false);
-    }).catch(() => setTicketsLoading(false));
+      setIsTicketsLoading(false);
+    }).catch(err => {
+      console.error('[UsuarioPage] Error al cargar tickets:', err);
+      setIsTicketsLoading(false);
+    });
   }, [token]);
 
   useEffect(() => {
-    api.getCategories(token).then(setCategories).catch(() => {});
+    api.getCategories(token).then(setCategories).catch(err => console.error('[UsuarioPage] Error al cargar categorías:', err));
   }, [token]);
 
   useEffect(() => {
@@ -234,12 +237,12 @@ export default function UsuarioPage({ session, onLogout }) {
     }
     setProbId('');
     setSuggestions([]);
-    api.getProblems(token, catId).then(setProblems).catch(() => {});
+    api.getProblems(token, catId).then(setProblems).catch(err => console.error('[UsuarioPage] Error al cargar problemas:', err));
   }, [catId, token]);
 
   useEffect(() => {
     if (!probId) { setSuggestions([]); return; }
-    api.getSuggestions(token, probId).then(setSuggestions).catch(() => {});
+    api.getSuggestions(token, probId).then(setSuggestions).catch(err => console.error('[UsuarioPage] Error al cargar sugerencias:', err));
   }, [probId, token]);
 
   const handleSubmit = async (e) => {
@@ -540,15 +543,15 @@ export default function UsuarioPage({ session, onLogout }) {
               </div>
               <button
                 onClick={loadTickets}
-                disabled={ticketsLoading}
+                disabled={isTicketsLoading}
                 className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
               >
-                <RefreshCw className={`w-4 h-4 ${ticketsLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isTicketsLoading ? 'animate-spin' : ''}`} />
                 Actualizar
               </button>
             </div>
 
-            {ticketsLoading ? (
+            {isTicketsLoading ? (
               <div className="flex justify-center py-16">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
               </div>

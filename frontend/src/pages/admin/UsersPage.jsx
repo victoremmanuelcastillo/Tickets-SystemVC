@@ -34,9 +34,9 @@ export default function UsersPage({ session }) {
   const [isSaving,      setIsSaving]      = useState(false);
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', area: '', specialty: '' });
-  const [formSaving, setFormSaving] = useState(false);
+  const [isFormSaving, setIsFormSaving] = useState(false);
 
-  const load = async () => {
+  const loadUsers = async () => {
     setIsLoading(true);
     try {
       setUsers(await api.getUsers(token));
@@ -46,23 +46,23 @@ export default function UsersPage({ session }) {
     setIsLoading(false);
   };
 
-  useEffect(() => { load(); }, [token]);
+  useEffect(() => { loadUsers(); }, [token]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setFormSaving(true);
+    setIsFormSaving(true);
     setError('');
     try {
       await api.register(token, form);
       setSuccess(`Usuario "${form.name}" creado correctamente.`);
       setForm({ name: '', email: '', password: '', role: 'usuario', area: '', specialty: '' });
       setIsShowingForm(false);
-      load();
+      loadUsers();
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       setError(err.message);
     }
-    setFormSaving(false);
+    setIsFormSaving(false);
   };
 
   const handleDelete = async (id, name) => {
@@ -75,13 +75,13 @@ export default function UsersPage({ session }) {
     }
   };
 
-  const startEdit = (u) => {
-    setEditingId(u.id);
-    setEditSpecialty(u.specialty || '');
-    setEditRole(u.role);
+  const handleStartEdit = (targetUser) => {
+    setEditingId(targetUser.id);
+    setEditSpecialty(targetUser.specialty || '');
+    setEditRole(targetUser.role);
   };
 
-  const cancelEdit = () => { setEditingId(null); };
+  const handleCancelEdit = () => { setEditingId(null); };
 
   const handleSaveEdit = async (u) => {
     setIsSaving(true);
@@ -182,10 +182,10 @@ export default function UsersPage({ session }) {
             <div className="sm:col-span-2 flex justify-end">
               <button
                 type="submit"
-                disabled={formSaving}
+                disabled={isFormSaving}
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-6 py-2.5 rounded-xl text-sm flex items-center gap-2 transition"
               >
-                {formSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                {isFormSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UserPlus className="w-4 h-4" />}
                 Crear usuario
               </button>
             </div>
@@ -228,7 +228,7 @@ export default function UsersPage({ session }) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   {user.id !== me.id && !user.is_primary_admin && (
                     <button
-                      onClick={() => editingId === user.id ? cancelEdit() : startEdit(user)}
+                      onClick={() => editingId === user.id ? handleCancelEdit() : handleStartEdit(user)}
                       className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
                     >
                       <Pencil className="w-4 h-4" />
@@ -305,7 +305,7 @@ export default function UsersPage({ session }) {
                   )}
 
                   <div className="flex gap-2 justify-end">
-                    <button onClick={cancelEdit} className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition">
+                    <button onClick={handleCancelEdit} className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition">
                       Cancelar
                     </button>
                     <button

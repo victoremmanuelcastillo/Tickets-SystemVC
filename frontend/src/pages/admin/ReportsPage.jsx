@@ -55,41 +55,41 @@ function BarRow({ label, value, max, color = 'bg-blue-500' }) {
   );
 }
 
-function TicketCard({ t }) {
-  const Icon = STATUS_ICON[t.status] || Circle;
+function TicketRow({ ticket }) {
+  const Icon = STATUS_ICON[ticket.status] || Circle;
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold text-slate-400">T-{t.id}</span>
-            {t.category_name
-              ? <span className="text-xs text-slate-500">{t.category_code} {t.category_name}</span>
+            <span className="text-[10px] font-bold text-slate-400">T-{ticket.id}</span>
+            {ticket.category_name
+              ? <span className="text-xs text-slate-500">{ticket.category_code} {ticket.category_name}</span>
               : <span className="text-xs text-amber-600 font-semibold">Otro</span>
             }
           </div>
           <p className="text-sm font-semibold text-slate-800 truncate mt-0.5">
-            {t.problem_name || 'Sin problema definido'}
+            {ticket.problem_name || 'Sin problema definido'}
           </p>
-          {t.other_description && (
+          {ticket.other_description && (
             <p className="text-xs text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
-              {t.other_description}
+              {ticket.other_description}
             </p>
           )}
-          {t.additional_info && (
-            <p className="text-xs text-slate-500 mt-1 line-clamp-2">{t.additional_info}</p>
+          {ticket.additional_info && (
+            <p className="text-xs text-slate-500 mt-1 line-clamp-2">{ticket.additional_info}</p>
           )}
         </div>
-        <span className={`shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${STATUS_COLOR[t.status]}`}>
+        <span className={`shrink-0 flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${STATUS_COLOR[ticket.status]}`}>
           <Icon className="w-3 h-3" />
-          {STATUS_LABEL[t.status]}
+          {STATUS_LABEL[ticket.status]}
         </span>
       </div>
       <div className="flex items-center gap-3 text-[10px] text-slate-400 pt-1 border-t border-slate-100 flex-wrap">
-        <span>{new Date(t.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-        {t.priority && <span className="font-semibold text-slate-500">{t.priority}</span>}
-        {t.assigned_name && <span>Asignado: <span className="font-semibold text-blue-600">{t.assigned_name}</span></span>}
-        {t.user_name && <span>Usuario: <span className="font-semibold text-slate-600">{t.user_name}</span></span>}
+        <span>{new Date(ticket.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+        {ticket.priority && <span className="font-semibold text-slate-500">{ticket.priority}</span>}
+        {ticket.assigned_name && <span>Asignado: <span className="font-semibold text-blue-600">{ticket.assigned_name}</span></span>}
+        {ticket.user_name && <span>Usuario: <span className="font-semibold text-slate-600">{ticket.user_name}</span></span>}
       </div>
     </div>
   );
@@ -153,17 +153,17 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
 
       {!isLoading && tickets && !hideFilters && (
         <div className="flex gap-2 flex-wrap">
-          {['pending', 'in_progress', 'resolved'].map(st => (
+          {['pending', 'in_progress', 'resolved'].map(statusKey => (
             <button
-              key={st}
-              onClick={() => setFilter(filter === st ? null : st)}
+              key={statusKey}
+              onClick={() => setFilter(filter === statusKey ? null : statusKey)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition
-                ${STATUS_FILTER_COLORS[st]}
-                ${filter === st ? 'ring-2 ring-offset-1' : 'opacity-70 hover:opacity-100'}
+                ${STATUS_FILTER_COLORS[statusKey]}
+                ${filter === statusKey ? 'ring-2 ring-offset-1' : 'opacity-70 hover:opacity-100'}
               `}
             >
-              {STATUS_FILTER_LABELS[st]}
-              <span className="font-bold">{counts[st]}</span>
+              {STATUS_FILTER_LABELS[statusKey]}
+              <span className="font-bold">{counts[statusKey]}</span>
             </button>
           ))}
           {filter && (
@@ -189,7 +189,7 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
         <div className="text-center py-16 text-slate-400">No hay tickets con ese estado.</div>
       ) : (
         <div className="space-y-3">
-          {filtered.map(ticket => <TicketCard key={ticket.id} t={ticket} />)}
+          {filtered.map(ticket => <TicketRow key={ticket.id} ticket={ticket} />)}
         </div>
       )}
     </div>
@@ -202,7 +202,7 @@ function UserTicketsDetail({ token, userName, userId, initialFilter, onBack }) {
       token={token}
       title={`Tickets de ${userName}`}
       subtitle="Historial de solicitudes del usuario."
-      fetchFn={(tk) => api.getUserTickets(tk, userId)}
+      fetchFn={(token) => api.getUserTickets(token, userId)}
       initialFilter={initialFilter}
       onBack={onBack}
     />
@@ -218,7 +218,7 @@ export default function ReportsPage({ session }) {
   const [detailStatus,  setDetailStatus] = useState(null);
   const [statusFilter,  setStatusFilter] = useState(null);
 
-  const load = async () => {
+  const loadReportData = async () => {
     setIsLoading(true);
     try {
       setData(await api.getReports(token));
@@ -228,7 +228,7 @@ export default function ReportsPage({ session }) {
     setIsLoading(false);
   };
 
-  useEffect(() => { load(); }, [token]);
+  useEffect(() => { loadReportData(); }, [token]);
 
   if (detailUser) {
     return (
@@ -248,7 +248,7 @@ export default function ReportsPage({ session }) {
         token={token}
         title={`Tickets de ${detailAgent.agent_name}`}
         subtitle="Tickets asignados a este agente / administrador."
-        fetchFn={(tk) => api.getAgentTickets(tk, detailAgent.agent_name)}
+        fetchFn={(token) => api.getAgentTickets(token, detailAgent.agent_name)}
         initialFilter={detailAgent.initialFilter}
         onBack={() => setDetailAgent(null)}
       />
@@ -262,7 +262,7 @@ export default function ReportsPage({ session }) {
         token={token}
         title={STATUS_TITLES[detailStatus]}
         subtitle="Lista de tickets filtrados por estado."
-        fetchFn={(tk) => api.getTicketsByStatus(tk, detailStatus)}
+        fetchFn={(token) => api.getTicketsByStatus(token, detailStatus)}
         initialFilter={detailStatus}
         hideFilters
         onBack={() => setDetailStatus(null)}
@@ -284,11 +284,11 @@ export default function ReportsPage({ session }) {
   const getCount = statusKey => parseInt(data.by_status.find(row => row.status === statusKey)?.count || 0);
 
   const adminMap = {};
-  for (const row of data.by_admin) {
-    const agentName = row.assigned_name;
+  for (const adminRow of data.by_admin) {
+    const agentName = adminRow.assigned_name;
     if (!agentName) continue;
     if (!adminMap[agentName]) adminMap[agentName] = { name: agentName, pending: 0, in_progress: 0, resolved: 0 };
-    adminMap[agentName][row.status] = parseInt(row.count);
+    adminMap[agentName][adminRow.status] = parseInt(adminRow.count);
   }
   const adminEntries = Object.values(adminMap).map(agentEntry => ({
     ...agentEntry,
@@ -299,39 +299,39 @@ export default function ReportsPage({ session }) {
   const filteredCategories = statusFilter
     ? (() => {
         const map = {};
-        for (const r of data.by_category) {
-          if (r.status !== statusFilter) continue;
-          map[r.category_name] = (map[r.category_name] || 0) + parseInt(r.count);
+        for (const categoryRow of data.by_category) {
+          if (categoryRow.status !== statusFilter) continue;
+          map[categoryRow.category_name] = (map[categoryRow.category_name] || 0) + parseInt(categoryRow.count);
         }
         return Object.entries(map).map(([category_name, count]) => ({ category_name, count }))
-          .sort((a, b) => b.count - a.count);
+          .sort((rowA, rowB) => rowB.count - rowA.count);
       })()
     : (() => {
         const map = {};
-        for (const r of data.by_category) {
-          map[r.category_name] = (map[r.category_name] || 0) + parseInt(r.count);
+        for (const categoryRow of data.by_category) {
+          map[categoryRow.category_name] = (map[categoryRow.category_name] || 0) + parseInt(categoryRow.count);
         }
         return Object.entries(map).map(([category_name, count]) => ({ category_name, count }))
-          .sort((a, b) => b.count - a.count);
+          .sort((rowA, rowB) => rowB.count - rowA.count);
       })();
 
   const filteredProblems = statusFilter
     ? (() => {
         const map = {};
-        for (const r of data.by_problem) {
-          if (r.status !== statusFilter) continue;
-          map[r.problem_name] = (map[r.problem_name] || 0) + parseInt(r.count);
+        for (const problemRow of data.by_problem) {
+          if (problemRow.status !== statusFilter) continue;
+          map[problemRow.problem_name] = (map[problemRow.problem_name] || 0) + parseInt(problemRow.count);
         }
         return Object.entries(map).map(([problem_name, count]) => ({ problem_name, count }))
-          .sort((a, b) => b.count - a.count).slice(0, 10);
+          .sort((rowA, rowB) => rowB.count - rowA.count).slice(0, 10);
       })()
     : (() => {
         const map = {};
-        for (const r of data.by_problem) {
-          map[r.problem_name] = (map[r.problem_name] || 0) + parseInt(r.count);
+        for (const problemRow of data.by_problem) {
+          map[problemRow.problem_name] = (map[problemRow.problem_name] || 0) + parseInt(problemRow.count);
         }
         return Object.entries(map).map(([problem_name, count]) => ({ problem_name, count }))
-          .sort((a, b) => b.count - a.count).slice(0, 10);
+          .sort((rowA, rowB) => rowB.count - rowA.count).slice(0, 10);
       })();
 
   const maxProblem  = Math.max(...filteredProblems.map(row => row.count), 1);
@@ -346,7 +346,7 @@ export default function ReportsPage({ session }) {
           <p className="text-slate-500 text-sm mt-0.5">Resumen general del sistema de tickets.</p>
         </div>
         <button
-          onClick={load}
+          onClick={loadReportData}
           className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium border border-slate-200 bg-white rounded-xl px-4 py-2 hover:bg-slate-50 transition"
         >
           <RefreshCw className="w-4 h-4" /> Actualizar

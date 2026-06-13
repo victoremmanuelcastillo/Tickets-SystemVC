@@ -22,12 +22,14 @@ function CreateTicketModal({ session, onClose, onCreated }) {
   const [errorMsg,    setErrorMsg]   = useState('');
 
   useEffect(() => {
-    api.getCategories(token).then(setCategories).catch(() => {});
+    api.getCategories(token).then(setCategories)
+      .catch(err => console.error('[CreateTicketModal] Error al cargar categorías:', err));
   }, [token]);
 
   useEffect(() => {
     if (!catId || catId === 'otro') { setProblems([]); setProbId(''); return; }
-    api.getProblems(token, catId).then(setProblems).catch(() => {});
+    api.getProblems(token, catId).then(setProblems)
+      .catch(err => console.error('[CreateTicketModal] Error al cargar problemas:', err));
   }, [catId, token]);
 
   const handleSearch = async () => {
@@ -216,7 +218,7 @@ function CreateTicketModal({ session, onClose, onCreated }) {
 
 export default function AgentTicketsPage({ session }) {
   const [view,       setView]       = useState('active');
-  const [showCreate, setShowCreate] = useState(false);
+  const [isShowingCreateModal, setIsShowingCreateModal] = useState(false);
 
   const {
     agentList,
@@ -260,7 +262,7 @@ export default function AgentTicketsPage({ session }) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => setIsShowingCreateModal(true)}
             className="flex items-center gap-2 text-white bg-emerald-600 hover:bg-emerald-700 text-sm font-medium rounded-xl px-4 py-2 transition"
           >
             <Plus className="w-4 h-4" /> Crear ticket
@@ -378,10 +380,10 @@ export default function AgentTicketsPage({ session }) {
         </div>
       )}
 
-      {showCreate && (
+      {isShowingCreateModal && (
         <CreateTicketModal
           session={session}
-          onClose={() => setShowCreate(false)}
+          onClose={() => setIsShowingCreateModal(false)}
           onCreated={loadTicketsAndAgents}
         />
       )}

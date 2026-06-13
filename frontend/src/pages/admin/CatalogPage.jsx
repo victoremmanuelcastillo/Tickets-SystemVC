@@ -102,7 +102,7 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
       const updated = await api.updateProblem(token, problem.id, form);
       onUpdated(updated);
       setIsEditing(false);
-    } catch (e) { setError(e.message); }
+    } catch (err) { setError(err.message); }
     setIsSaving(false);
   };
 
@@ -205,7 +205,7 @@ function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
     try {
       const createdProblem = await api.createProblem(token, { ...form, category_id: categoryId });
       onAdded(createdProblem);
-    } catch (e) { setError(e.message); }
+    } catch (err) { setError(err.message); }
     setIsSaving(false);
   };
 
@@ -287,8 +287,8 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
     try {
       await api.deleteCategory(token, category.id);
       onCategoryDeleted(category.id);
-    } catch (e) {
-      alert(e.message);
+    } catch (err) {
+      alert(err.message);
       setIsDeleting(false);
     }
   };
@@ -358,7 +358,7 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
             <AddProblemForm
               token={token}
               categoryId={category.id}
-              onAdded={p => { setProblems(prev => [...(prev || []), p]); setIsAddingProblem(false); }}
+              onAdded={createdProblem => { setProblems(prev => [...(prev || []), createdProblem]); setIsAddingProblem(false); }}
               onCancel={() => setIsAddingProblem(false)}
             />
           ) : (
@@ -477,13 +477,13 @@ export default function CatalogPage({ session }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {categories.map(cat => (
+          {categories.map(category => (
             <CategoryCard
-              key={cat.id}
-              category={cat}
+              key={category.id}
+              category={category}
               token={token}
               onCategoryUpdated={handleCategoryAction}
-              onCategoryDeleted={deletedId => setCategories(prev => prev.filter(category => category.id !== deletedId))}
+              onCategoryDeleted={deletedId => setCategories(prev => prev.filter(cat => cat.id !== deletedId))}
             />
           ))}
         </div>

@@ -19,14 +19,18 @@ export default function AIPage({ session }) {
 
   const selectedProb = problems.find(problem => problem.id === parseInt(probId));
 
-  useEffect(() => { api.getCategories(token).then(setCategories); }, [token]);
+  useEffect(() => {
+    api.getCategories(token).then(setCategories)
+      .catch(err => console.error('[AIPage] Error al cargar categorías:', err));
+  }, [token]);
 
   useEffect(() => {
     if (!catId) return;
     setProbId('');
     setCurrentSug('');
     setGenerated('');
-    api.getProblems(token, catId).then(setProblems);
+    api.getProblems(token, catId).then(setProblems)
+      .catch(err => console.error('[AIPage] Error al cargar problemas:', err));
   }, [catId, token]);
 
   useEffect(() => {

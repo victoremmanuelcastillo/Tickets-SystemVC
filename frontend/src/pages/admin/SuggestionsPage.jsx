@@ -21,23 +21,31 @@ export default function SuggestionsPage({ session }) {
   const [mobileStep, setMobileStep] = useState('categories');
 
   useEffect(() => {
-    api.getCategories(token).then(setCategories);
+    api.getCategories(token)
+      .then(setCategories)
+      .catch(err => console.error('[SuggestionsPage] Error al cargar categorías:', err));
   }, [token]);
 
-  const selectCategory = (cat) => {
-    setSelectedCat(cat);
+  const handleSelectCategory = (category) => {
+    setSelectedCat(category);
     setSelectedProb(null);
     setSuggestions([]);
-    api.getProblems(token, cat.id).then(setProblems);
+    api.getProblems(token, category.id)
+      .then(setProblems)
+      .catch(err => console.error('[SuggestionsPage] Error al cargar problemas:', err));
     setMobileStep('problems');
   };
 
-  const selectProblem = async (prob) => {
-    setSelectedProb(prob);
+  const handleSelectProblem = async (problem) => {
+    setSelectedProb(problem);
     setIsAdding(false);
     setEditId(null);
-    const sug = await api.getSuggestions(token, prob.id);
-    setSuggestions(sug);
+    try {
+      const fetchedSuggestions = await api.getSuggestions(token, problem.id);
+      setSuggestions(fetchedSuggestions);
+    } catch (err) {
+      console.error('[SuggestionsPage] Error al cargar sugerencias:', err);
+    }
     setMobileStep('suggestions');
   };
 
@@ -80,14 +88,14 @@ export default function SuggestionsPage({ session }) {
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Categorías</p>
       </div>
       <div className="divide-y divide-slate-100">
-        {categories.map(cat => (
+        {categories.map(category => (
           <button
-            key={cat.id}
-            onClick={() => selectCategory(cat)}
+            key={category.id}
+            onClick={() => handleSelectCategory(category)}
             className={`w-full flex items-center justify-between px-4 py-3 text-left transition text-sm
-              ${selectedCat?.id === cat.id ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+              ${selectedCat?.id === category.id ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
           >
-            <span>{cat.code} {cat.name}</span>
+            <span>{category.code} {category.name}</span>
             <ChevronRight className="w-4 h-4 shrink-0 opacity-50" />
           </button>
         ))}
@@ -108,14 +116,14 @@ export default function SuggestionsPage({ session }) {
         <p className="text-slate-400 text-sm text-center py-12 italic">Selecciona una categoría</p>
       ) : (
         <div className="divide-y divide-slate-100">
-          {problems.map(prob => (
+          {problems.map(problem => (
             <button
-              key={prob.id}
-              onClick={() => selectProblem(prob)}
+              key={problem.id}
+              onClick={() => handleSelectProblem(problem)}
               className={`w-full flex items-center justify-between px-4 py-3 text-left transition text-sm
-                ${selectedProb?.id === prob.id ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
+                ${selectedProb?.id === problem.id ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'}`}
             >
-              <span>{prob.code} {prob.name}</span>
+              <span>{problem.code} {problem.name}</span>
               <ChevronRight className="w-4 h-4 shrink-0 opacity-50" />
             </button>
           ))}
@@ -185,9 +193,9 @@ export default function SuggestionsPage({ session }) {
               </div>
             )}
 
-            {suggestions.map(sug => (
-              <div key={sug.id} className="border border-slate-200 rounded-xl p-3 bg-white">
-                {editId === sug.id ? (
+            {suggestions.map(suggestion => (
+              <div key={suggestion.id} className="border border-slate-200 rounded-xl p-3 bg-white">
+                {editId === suggestion.id ? (
                   <>
                     <textarea
                       autoFocus
@@ -198,19 +206,19 @@ export default function SuggestionsPage({ session }) {
                     />
                     <div className="flex gap-2 mt-2 justify-end">
                       <button onClick={() => setEditId(null)} className="text-slate-500 p-1.5 rounded-lg hover:bg-slate-100 transition"><X className="w-4 h-4" /></button>
-                      <button onClick={() => handleEdit(sug.id)} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                      <button onClick={() => handleEdit(suggestion.id)} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
                         <Check className="w-3.5 h-3.5" /> Guardar
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: sug.content }} />
+                    <p className="text-sm text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: suggestion.content }} />
                     <div className="flex gap-1.5 mt-2 justify-end">
-                      <button onClick={() => { setEditId(sug.id); setEditText(sug.content); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                      <button onClick={() => { setEditId(suggestion.id); setEditText(suggestion.content); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDelete(sug.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                      <button onClick={() => handleDelete(suggestion.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
