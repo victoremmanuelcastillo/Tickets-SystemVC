@@ -17,7 +17,7 @@ export default function AIPage({ session }) {
   const [error,        setError]        = useState('');
   const [saved,        setSaved]        = useState(false);
 
-  const selectedProb = problems.find(p => p.id === parseInt(probId));
+  const selectedProb = problems.find(problem => problem.id === parseInt(probId));
 
   useEffect(() => { api.getCategories(token).then(setCategories); }, [token]);
 
@@ -93,7 +93,7 @@ export default function AIPage({ session }) {
               className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
               <option value="">Selecciona una categoría...</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.code} {c.name}</option>)}
+              {categories.map(category => <option key={category.id} value={category.id}>{category.code} {category.name}</option>)}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
@@ -110,7 +110,7 @@ export default function AIPage({ session }) {
               className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition"
             >
               <option value="">{catId ? 'Selecciona el problema...' : 'Primero elige una categoría...'}</option>
-              {problems.map(p => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}
+              {problems.map(problem => <option key={problem.id} value={problem.id}>{problem.code} {problem.name}</option>)}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>

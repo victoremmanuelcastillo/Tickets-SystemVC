@@ -75,16 +75,16 @@ function TicketNotes({ token, ticketId }) {
 
   return (
     <div className="space-y-2">
-      {notes.map((n, i) => (
-        <div key={n.id} className="flex gap-2">
+      {notes.map((note, noteIndex) => (
+        <div key={note.id} className="flex gap-2">
           <div className="flex flex-col items-center">
             <div className="w-2 h-2 rounded-full bg-blue-400 mt-1 shrink-0" />
-            {i < notes.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 mt-1" />}
+            {noteIndex < notes.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 mt-1" />}
           </div>
           <div className="flex-1 pb-1">
-            <p className="text-xs text-slate-700 leading-relaxed">{n.note}</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{note.note}</p>
             <p className="text-[10px] text-slate-400 mt-0.5">
-              {n.admin_name} · {new Date(n.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              {note.admin_name} · {new Date(note.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function UsuarioPage({ session, onLogout }) {
   const [submitted, setSubmitted] = useState(false);
   const [error,     setError]    = useState('');
   const isOther = catId === 'otro';
-  const selectedProblem = problems.find(p => p.id === parseInt(probId));
+  const selectedProblem = problems.find(problem => problem.id === parseInt(probId));
 
   // --- History state ---
   const [tickets,        setTickets]        = useState([]);
@@ -384,8 +384,8 @@ export default function UsuarioPage({ session, onLogout }) {
                       className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-slate-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     >
                       <option value="" disabled>Selecciona una categoría...</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.code} {c.name}</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.id}>{category.code} {category.name}</option>
                       ))}
                       <option value="otro">Otro (no está en la lista)</option>
                     </select>
@@ -408,8 +408,8 @@ export default function UsuarioPage({ session, onLogout }) {
                         <option value="" disabled>
                           {catId ? 'Selecciona el problema...' : 'Primero elige una categoría...'}
                         </option>
-                        {problems.map(p => (
-                          <option key={p.id} value={p.id}>{p.code} {p.name}</option>
+                        {problems.map(problem => (
+                          <option key={problem.id} value={problem.id}>{problem.code} {problem.name}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -470,14 +470,14 @@ export default function UsuarioPage({ session, onLogout }) {
                     </label>
                     {suggestions.length > 0 ? (
                       <div className="space-y-2">
-                        {suggestions.map((s, i) => (
-                          <div key={s.id} className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                        {suggestions.map((suggestion, suggestionIndex) => (
+                          <div key={suggestion.id} className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
                             {suggestions.length > 1 && (
                               <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">
-                                Sugerencia {i + 1}
+                                Sugerencia {suggestionIndex + 1}
                               </p>
                             )}
-                            <p className="text-sm leading-relaxed text-emerald-900">{s.content}</p>
+                            <p className="text-sm leading-relaxed text-emerald-900">{suggestion.content}</p>
                           </div>
                         ))}
                       </div>
@@ -574,15 +574,15 @@ export default function UsuarioPage({ session, onLogout }) {
                     { key: 'resolved',    label: 'Resueltos',  color: 'text-green-700 bg-green-50 border-green-200' },
                   ].map(({ key, label, color }) => (
                     <div key={key} className={`rounded-xl border p-3 text-center ${color}`}>
-                      <p className="text-xl font-bold">{tickets.filter(t => t.status === key).length}</p>
+                      <p className="text-xl font-bold">{tickets.filter(ticket => ticket.status === key).length}</p>
                       <p className="text-[10px] font-semibold uppercase tracking-wide mt-0.5">{label}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Ticket list */}
-                {tickets.map(t => (
-                  <TicketCard key={t.id} ticket={t} token={token} />
+                {tickets.map(ticket => (
+                  <TicketCard key={ticket.id} ticket={ticket} token={token} />
                 ))}
               </div>
             )}

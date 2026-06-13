@@ -18,9 +18,9 @@ export default function App() {
   }, []);
 
   const handleLogin = (user, token) => {
-    const s = { user, token };
-    setSession(s);
-    localStorage.setItem('st_session', JSON.stringify(s));
+    const newSession = { user, token };
+    setSession(newSession);
+    localStorage.setItem('st_session', JSON.stringify(newSession));
   };
 
   const handleLogout = () => {

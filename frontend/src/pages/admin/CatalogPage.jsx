@@ -132,7 +132,7 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prioridad</label>
             <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
               className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
-              {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+              {PRIORITIES.map(priority => <option key={priority} value={priority}>{priority}</option>)}
             </select>
           </div>
           <div>
@@ -203,8 +203,8 @@ function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
     setSaving(true);
     setError('');
     try {
-      const p = await api.createProblem(token, { ...form, category_id: categoryId });
-      onAdded(p);
+      const createdProblem = await api.createProblem(token, { ...form, category_id: categoryId });
+      onAdded(createdProblem);
     } catch (e) { setError(e.message); }
     setSaving(false);
   };
@@ -227,7 +227,7 @@ function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Prioridad</label>
           <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
             className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-400">
-            {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+            {PRIORITIES.map(priority => <option key={priority} value={priority}>{priority}</option>)}
           </select>
         </div>
         <div>
@@ -335,13 +335,13 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
             <p className="text-xs text-slate-400 py-3">Cargando problemas...</p>
           ) : (
             <div className="divide-y divide-slate-50">
-              {(problems || []).map(p => (
+              {(problems || []).map(problem => (
                 <ProblemRow
-                  key={p.id}
-                  problem={p}
+                  key={problem.id}
+                  problem={problem}
                   token={token}
-                  onUpdated={updated => setProblems(prev => prev.map(x => x.id === updated.id ? updated : x))}
-                  onDeleted={id => setProblems(prev => prev.filter(x => x.id !== id))}
+                  onUpdated={updated => setProblems(prev => prev.map(existing => existing.id === updated.id ? updated : existing))}
+                  onDeleted={deletedId => setProblems(prev => prev.filter(existing => existing.id !== deletedId))}
                 />
               ))}
               {(!problems || problems.length === 0) && (
@@ -407,7 +407,7 @@ export default function CatalogPage({ session }) {
         setCategories(prev => [...prev, cat]);
       } else {
         const updated = await api.updateCategory(token, modal.category.id, form);
-        setCategories(prev => prev.map(c => c.id === updated.id ? updated : c));
+        setCategories(prev => prev.map(category => category.id === updated.id ? updated : category));
       }
       closeModal();
     } catch (e) { setModalError(e.message); }
@@ -479,7 +479,7 @@ export default function CatalogPage({ session }) {
               category={cat}
               token={token}
               onCategoryUpdated={handleCategoryAction}
-              onCategoryDeleted={id => setCategories(prev => prev.filter(c => c.id !== id))}
+              onCategoryDeleted={deletedId => setCategories(prev => prev.filter(category => category.id !== deletedId))}
             />
           ))}
         </div>

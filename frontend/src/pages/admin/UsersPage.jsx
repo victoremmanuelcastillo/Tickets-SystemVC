@@ -65,7 +65,7 @@ export default function UsersPage({ session }) {
     if (!confirm(`¿Eliminar al usuario "${name}"? Esta acción no se puede deshacer.`)) return;
     try {
       await api.deleteUser(token, id);
-      setUsers(prev => prev.filter(u => u.id !== id));
+      setUsers(prev => prev.filter(existingUser => existingUser.id !== id));
     } catch (err) {
       setError(err.message);
     }
@@ -86,7 +86,7 @@ export default function UsersPage({ session }) {
       const body = { specialty: editSpecialty || null };
       if (isPrimary && u.id !== me.id) body.role = editRole;
       const updated = await api.updateUserProfile(token, u.id, body);
-      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, ...updated } : x));
+      setUsers(prev => prev.map(existingUser => existingUser.id === u.id ? { ...existingUser, ...updated } : existingUser));
       setEditingId(null);
       setSuccess('Usuario actualizado.');
       setTimeout(() => setSuccess(''), 3000);
@@ -168,8 +168,8 @@ export default function UsersPage({ session }) {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 >
                   <option value="">Sin especialidad (ve todos)</option>
-                  {SPECIALTIES.filter(Boolean).map(s => (
-                    <option key={s} value={s}>{s}</option>
+                  {SPECIALTIES.filter(Boolean).map(specialty => (
+                    <option key={specialty} value={specialty}>{specialty}</option>
                   ))}
                 </select>
               </div>
@@ -196,43 +196,43 @@ export default function UsersPage({ session }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {users.map(u => (
-            <div key={u.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+          {users.map(user => (
+            <div key={user.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
               <div className="flex items-start justify-between gap-3">
                 {/* Avatar + info */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                    u.is_primary_admin ? 'bg-amber-400 text-white' :
-                    u.role === 'admin'  ? 'bg-amber-100 text-amber-700' :
-                                         'bg-blue-100 text-blue-700'
+                    user.is_primary_admin ? 'bg-amber-400 text-white' :
+                    user.role === 'admin'  ? 'bg-amber-100 text-amber-700' :
+                                            'bg-blue-100 text-blue-700'
                   }`}>
-                    {u.is_primary_admin ? <Crown className="w-4 h-4" /> : u.name[0].toUpperCase()}
+                    {user.is_primary_admin ? <Crown className="w-4 h-4" /> : user.name[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-800 text-sm">{u.name}</p>
-                      {u.is_primary_admin && (
+                      <p className="font-semibold text-slate-800 text-sm">{user.name}</p>
+                      {user.is_primary_admin && (
                         <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full font-bold uppercase">Admin Principal</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                    {u.area && <p className="text-xs text-slate-400 mt-0.5">{u.area}</p>}
+                    <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                    {user.area && <p className="text-xs text-slate-400 mt-0.5">{user.area}</p>}
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {u.id !== me.id && !u.is_primary_admin && (
+                  {user.id !== me.id && !user.is_primary_admin && (
                     <button
-                      onClick={() => editingId === u.id ? cancelEdit() : startEdit(u)}
+                      onClick={() => editingId === user.id ? cancelEdit() : startEdit(user)}
                       className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                   )}
-                  {u.id !== me.id && !u.is_primary_admin && (
+                  {user.id !== me.id && !user.is_primary_admin && (
                     <button
-                      onClick={() => handleDelete(u.id, u.name)}
+                      onClick={() => handleDelete(user.id, user.name)}
                       className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -244,42 +244,42 @@ export default function UsersPage({ session }) {
               {/* Badges row */}
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 flex-wrap">
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                  u.role === 'admin'  ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                  u.role === 'agente' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                        'bg-slate-100 text-slate-600 border-slate-200'
+                  user.role === 'admin'  ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                  user.role === 'agente' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                          'bg-slate-100 text-slate-600 border-slate-200'
                 }`}>
-                  {u.role === 'admin' || u.role === 'agente' ? <Shield className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
-                  {u.role === 'admin' ? 'Administrador' : u.role === 'agente' ? 'Agente' : 'Usuario'}
+                  {user.role === 'admin' || user.role === 'agente' ? <Shield className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
+                  {user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Usuario'}
                 </span>
 
-                {u.specialty && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${SPECIALTY_COLOR[u.specialty] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                    {u.specialty}
+                {user.specialty && (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${SPECIALTY_COLOR[user.specialty] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                    {user.specialty}
                   </span>
                 )}
 
-                {(u.role === 'admin' || u.role === 'agente') && !u.specialty && (
+                {(user.role === 'admin' || user.role === 'agente') && !user.specialty && (
                   <span className="text-[10px] text-slate-400 italic">Ve todos los tickets</span>
                 )}
               </div>
 
               {/* Edit panel */}
-              {editingId === u.id && (
+              {editingId === user.id && (
                 <div className="mt-3 pt-3 border-t border-slate-100 space-y-3">
                   {/* Specialty */}
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      Especialidad {u.role === 'usuario' ? '(solo para agentes/admins)' : ''}
+                      Especialidad {user.role === 'usuario' ? '(solo para agentes/admins)' : ''}
                     </label>
                     <select
                       value={editSpecialty}
                       onChange={e => setEditSpecialty(e.target.value)}
-                      disabled={u.role !== 'admin' && u.role !== 'agente'}
+                      disabled={user.role !== 'admin' && user.role !== 'agente'}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40 transition"
                     >
                       <option value="">Sin especialidad (ve todos)</option>
-                      {SPECIALTIES.filter(Boolean).map(s => (
-                        <option key={s} value={s}>{s}</option>
+                      {SPECIALTIES.filter(Boolean).map(specialty => (
+                        <option key={specialty} value={specialty}>{specialty}</option>
                       ))}
                     </select>
                   </div>
@@ -305,7 +305,7 @@ export default function UsersPage({ session }) {
                       Cancelar
                     </button>
                     <button
-                      onClick={() => handleSaveEdit(u)}
+                      onClick={() => handleSaveEdit(user)}
                       disabled={saving}
                       className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-1.5 rounded-lg flex items-center gap-1.5 transition"
                     >

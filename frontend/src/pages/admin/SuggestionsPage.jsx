@@ -45,8 +45,8 @@ export default function SuggestionsPage({ session }) {
     if (!newText.trim() || !selectedProb) return;
     setSaving(true);
     try {
-      const s = await api.createSuggestion(token, { problem_id: selectedProb.id, content: newText.trim() });
-      setSuggestions(prev => [s, ...prev]);
+      const createdSuggestion = await api.createSuggestion(token, { problem_id: selectedProb.id, content: newText.trim() });
+      setSuggestions(prev => [createdSuggestion, ...prev]);
       setNewText('');
       setAdding(false);
     } catch {}
@@ -57,8 +57,8 @@ export default function SuggestionsPage({ session }) {
     if (!editText.trim()) return;
     setSaving(true);
     try {
-      const s = await api.updateSuggestion(token, id, editText.trim());
-      setSuggestions(prev => prev.map(x => x.id === id ? s : x));
+      const updatedSuggestion = await api.updateSuggestion(token, id, editText.trim());
+      setSuggestions(prev => prev.map(suggestion => suggestion.id === id ? updatedSuggestion : suggestion));
       setEditId(null);
     } catch {}
     setSaving(false);
@@ -67,7 +67,7 @@ export default function SuggestionsPage({ session }) {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta sugerencia?')) return;
     await api.deleteSuggestion(token, id);
-    setSuggestions(prev => prev.filter(s => s.id !== id));
+    setSuggestions(prev => prev.filter(suggestion => suggestion.id !== id));
   };
 
   const CategoriesPanel = (

@@ -123,16 +123,16 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
   }, []);
 
   const filtered = tickets
-    ? (filter ? tickets.filter(t => t.status === filter) : tickets)
+    ? (filter ? tickets.filter(ticket => ticket.status === filter) : tickets)
         .slice()
-        .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9))
+        .sort((ticketA, ticketB) => (PRIORITY_ORDER[ticketA.priority] ?? 9) - (PRIORITY_ORDER[ticketB.priority] ?? 9))
     : [];
 
   const counts = tickets
     ? {
-        pending:     tickets.filter(t => t.status === 'pending').length,
-        in_progress: tickets.filter(t => t.status === 'in_progress').length,
-        resolved:    tickets.filter(t => t.status === 'resolved').length,
+        pending:     tickets.filter(ticket => ticket.status === 'pending').length,
+        in_progress: tickets.filter(ticket => ticket.status === 'in_progress').length,
+        resolved:    tickets.filter(ticket => ticket.status === 'resolved').length,
       }
     : {};
 
@@ -189,7 +189,7 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
         <div className="text-center py-16 text-slate-400">No hay tickets con ese estado.</div>
       ) : (
         <div className="space-y-3">
-          {filtered.map(t => <TicketCard key={t.id} t={t} />)}
+          {filtered.map(ticket => <TicketCard key={ticket.id} t={ticket} />)}
         </div>
       )}
     </div>
@@ -276,8 +276,8 @@ export default function ReportsPage({ session }) {
     <div className="text-center py-24 text-slate-400">Error al cargar reportes.</div>
   );
 
-  const totalTickets = data.by_status.reduce((s, r) => s + parseInt(r.count), 0);
-  const getCount = st => parseInt(data.by_status.find(r => r.status === st)?.count || 0);
+  const totalTickets = data.by_status.reduce((sum, row) => sum + parseInt(row.count), 0);
+  const getCount = statusKey => parseInt(data.by_status.find(row => row.status === statusKey)?.count || 0);
 
   const adminMap = {};
   for (const row of data.by_admin) {
@@ -286,10 +286,10 @@ export default function ReportsPage({ session }) {
     if (!adminMap[agentName]) adminMap[agentName] = { name: agentName, pending: 0, in_progress: 0, resolved: 0 };
     adminMap[agentName][row.status] = parseInt(row.count);
   }
-  const adminEntries = Object.values(adminMap).map(a => ({
-    ...a,
-    total: a.pending + a.in_progress + a.resolved,
-  })).sort((a, b) => b.total - a.total);
+  const adminEntries = Object.values(adminMap).map(agentEntry => ({
+    ...agentEntry,
+    total: agentEntry.pending + agentEntry.in_progress + agentEntry.resolved,
+  })).sort((entryA, entryB) => entryB.total - entryA.total);
 
   // Filtrar categorías y problemas según estado seleccionado
   const filteredCategories = statusFilter
@@ -330,8 +330,8 @@ export default function ReportsPage({ session }) {
           .sort((a, b) => b.count - a.count).slice(0, 10);
       })();
 
-  const maxProblem  = Math.max(...filteredProblems.map(r => r.count), 1);
-  const maxCategory = Math.max(...filteredCategories.map(r => r.count), 1);
+  const maxProblem  = Math.max(...filteredProblems.map(row => row.count), 1);
+  const maxCategory = Math.max(...filteredCategories.map(row => row.count), 1);
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -386,8 +386,8 @@ export default function ReportsPage({ session }) {
         <div className="space-y-3">
           {filteredCategories.length === 0
             ? <p className="text-xs text-slate-400 text-center py-4">Sin datos para este estado.</p>
-            : filteredCategories.map(r => (
-                <BarRow key={r.category_name} label={r.category_name} value={r.count} max={maxCategory} color="bg-blue-500" />
+            : filteredCategories.map(row => (
+                <BarRow key={row.category_name} label={row.category_name} value={row.count} max={maxCategory} color="bg-blue-500" />
               ))
           }
         </div>
@@ -407,11 +407,11 @@ export default function ReportsPage({ session }) {
         <div className="space-y-3">
           {filteredProblems.length === 0
             ? <p className="text-xs text-slate-400 text-center py-4">Sin datos para este estado.</p>
-            : filteredProblems.map(r => (
+            : filteredProblems.map(row => (
             <BarRow
-              key={r.problem_name}
-              label={r.problem_name}
-              value={r.count}
+              key={row.problem_name}
+              label={row.problem_name}
+              value={row.count}
               max={maxProblem}
               color="bg-amber-400"
             />
@@ -440,37 +440,37 @@ export default function ReportsPage({ session }) {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {data.by_user
-                .filter(r => !statusFilter || parseInt(r[statusFilter === 'in_progress' ? 'in_progress' : statusFilter]) > 0)
-                .map(r => (
-                <tr key={r.user_name} className="hover:bg-blue-50 transition">
+                .filter(userRow => !statusFilter || parseInt(userRow[statusFilter === 'in_progress' ? 'in_progress' : statusFilter]) > 0)
+                .map(userRow => (
+                <tr key={userRow.user_name} className="hover:bg-blue-50 transition">
                   <td
                     className="py-2 pr-3 font-medium text-blue-600 underline underline-offset-2 cursor-pointer"
-                    onClick={() => setDetailUser({ user_name: r.user_name, user_id: r.user_id, initialFilter: statusFilter })}
+                    onClick={() => setDetailUser({ user_name: userRow.user_name, user_id: userRow.user_id, initialFilter: statusFilter })}
                     title="Ver todos los tickets"
-                  >{r.user_name}</td>
-                  <td className="py-2 pr-3 text-slate-500">{r.area || '—'}</td>
+                  >{userRow.user_name}</td>
+                  <td className="py-2 pr-3 text-slate-500">{userRow.area || '—'}</td>
                   <td className="py-2 px-2 text-center">
                     <span
-                      onClick={() => setDetailUser({ user_name: r.user_name, user_id: r.user_id, initialFilter: 'pending' })}
+                      onClick={() => setDetailUser({ user_name: userRow.user_name, user_id: userRow.user_id, initialFilter: 'pending' })}
                       className="inline-block w-6 h-6 leading-6 rounded-full bg-yellow-50 text-yellow-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-yellow-400 transition"
                       title="Ver pendientes"
-                    >{r.pending}</span>
+                    >{userRow.pending}</span>
                   </td>
                   <td className="py-2 px-2 text-center">
                     <span
-                      onClick={() => setDetailUser({ user_name: r.user_name, user_id: r.user_id, initialFilter: 'in_progress' })}
+                      onClick={() => setDetailUser({ user_name: userRow.user_name, user_id: userRow.user_id, initialFilter: 'in_progress' })}
                       className="inline-block w-6 h-6 leading-6 rounded-full bg-blue-50 text-blue-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
                       title="Ver en proceso"
-                    >{r.in_progress}</span>
+                    >{userRow.in_progress}</span>
                   </td>
                   <td className="py-2 px-2 text-center">
                     <span
-                      onClick={() => setDetailUser({ user_name: r.user_name, user_id: r.user_id, initialFilter: 'resolved' })}
+                      onClick={() => setDetailUser({ user_name: userRow.user_name, user_id: userRow.user_id, initialFilter: 'resolved' })}
                       className="inline-block w-6 h-6 leading-6 rounded-full bg-green-50 text-green-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-green-400 transition"
                       title="Ver resueltos"
-                    >{r.resolved}</span>
+                    >{userRow.resolved}</span>
                   </td>
-                  <td className="py-2 pl-2 text-center font-bold text-slate-700">{r.total}</td>
+                  <td className="py-2 pl-2 text-center font-bold text-slate-700">{userRow.total}</td>
                 </tr>
               ))}
             </tbody>
@@ -499,36 +499,36 @@ export default function ReportsPage({ session }) {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {adminEntries
-                  .filter(a => !statusFilter || a[statusFilter] > 0)
-                  .map(a => (
-                  <tr key={a.name} className="hover:bg-slate-50 transition">
+                  .filter(agentEntry => !statusFilter || agentEntry[statusFilter] > 0)
+                  .map(agentEntry => (
+                  <tr key={agentEntry.name} className="hover:bg-slate-50 transition">
                     <td
                       className="py-2 pr-3 font-medium text-blue-600 underline underline-offset-2 cursor-pointer"
-                      onClick={() => setDetailAgent({ agent_id: a.id, agent_name: a.name, initialFilter: statusFilter })}
+                      onClick={() => setDetailAgent({ agent_id: agentEntry.id, agent_name: agentEntry.name, initialFilter: statusFilter })}
                       title="Ver todos los tickets de este agente"
-                    >{a.name}</td>
+                    >{agentEntry.name}</td>
                     <td className="py-2 px-2 text-center">
                       <span
-                        onClick={() => setDetailAgent({ agent_id: a.id, agent_name: a.name, initialFilter: 'pending' })}
+                        onClick={() => setDetailAgent({ agent_id: agentEntry.id, agent_name: agentEntry.name, initialFilter: 'pending' })}
                         className="inline-block w-6 h-6 leading-6 rounded-full bg-yellow-50 text-yellow-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-yellow-400 transition"
                         title="Ver pendientes"
-                      >{a.pending}</span>
+                      >{agentEntry.pending}</span>
                     </td>
                     <td className="py-2 px-2 text-center">
                       <span
-                        onClick={() => setDetailAgent({ agent_id: a.id, agent_name: a.name, initialFilter: 'in_progress' })}
+                        onClick={() => setDetailAgent({ agent_id: agentEntry.id, agent_name: agentEntry.name, initialFilter: 'in_progress' })}
                         className="inline-block w-6 h-6 leading-6 rounded-full bg-blue-50 text-blue-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
                         title="Ver en proceso"
-                      >{a.in_progress}</span>
+                      >{agentEntry.in_progress}</span>
                     </td>
                     <td className="py-2 px-2 text-center">
                       <span
-                        onClick={() => setDetailAgent({ agent_id: a.id, agent_name: a.name, initialFilter: 'resolved' })}
+                        onClick={() => setDetailAgent({ agent_id: agentEntry.id, agent_name: agentEntry.name, initialFilter: 'resolved' })}
                         className="inline-block w-6 h-6 leading-6 rounded-full bg-green-50 text-green-700 font-bold text-center cursor-pointer hover:ring-2 hover:ring-green-400 transition"
                         title="Ver resueltos"
-                      >{a.resolved}</span>
+                      >{agentEntry.resolved}</span>
                     </td>
-                    <td className="py-2 pl-2 text-center font-bold text-slate-700">{a.total}</td>
+                    <td className="py-2 pl-2 text-center font-bold text-slate-700">{agentEntry.total}</td>
                   </tr>
                 ))}
               </tbody>
