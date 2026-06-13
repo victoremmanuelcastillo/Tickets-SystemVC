@@ -17,8 +17,8 @@ const TABS = [
 ];
 
 export default function AdminLayout({ session, onLogout }) {
-  const [tab,    setTab]    = useState('tickets');
-  const [mobile, setMobile] = useState(false);
+  const [tab,              setTab]              = useState('tickets');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const TabComponent = {
     tickets:     <TicketsPage     session={session} />,
@@ -35,7 +35,7 @@ export default function AdminLayout({ session, onLogout }) {
       <aside className={`
         fixed inset-y-0 left-0 z-40 w-60 bg-slate-900 flex flex-col
         transform transition-transform duration-200
-        ${mobile ? 'translate-x-0' : '-translate-x-full'}
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:relative lg:translate-x-0
       `}>
         {/* Brand */}
@@ -56,7 +56,7 @@ export default function AdminLayout({ session, onLogout }) {
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => { setTab(id); setMobile(false); }}
+              onClick={() => { setTab(id); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
                 ${tab === id
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
@@ -96,20 +96,20 @@ export default function AdminLayout({ session, onLogout }) {
         </div>
       </aside>
 
-      {/* Overlay mobile */}
-      {mobile && (
-        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setMobile(false)} />
+      {/* Overlay isMobileMenuOpen */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
       )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
         <div className="lg:hidden flex items-center gap-3 bg-slate-900 px-4 py-3 border-b border-slate-800">
-          <button onClick={() => setMobile(true)} className="text-slate-400 hover:text-white">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-400 hover:text-white">
             <Menu className="w-5 h-5" />
           </button>
           <span className="text-white font-bold text-sm">
-            {TABS.find(t => t.id === tab)?.label}
+            {TABS.find(tabItem => tabItem.id === tab)?.label}
           </span>
         </div>
 

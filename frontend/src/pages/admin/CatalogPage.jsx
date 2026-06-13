@@ -84,9 +84,9 @@ function CategoryModal({ initial, onSave, onClose, saving, error }) {
 
 /* ─── Fila de problema ──────────────────────────────────────── */
 function ProblemRow({ problem, token, onUpdated, onDeleted }) {
-  const [editing, setEditing] = useState(false);
-  const [saving,  setSaving]  = useState(false);
-  const [error,   setError]   = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving,  setIsSaving]  = useState(false);
+  const [error,     setError]     = useState('');
   const [form,    setForm]    = useState({
     code: problem.code,
     name: problem.name,
@@ -96,14 +96,14 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
   });
 
   const handleSave = async () => {
-    setSaving(true);
+    setIsSaving(true);
     setError('');
     try {
       const updated = await api.updateProblem(token, problem.id, form);
       onUpdated(updated);
-      setEditing(false);
+      setIsEditing(false);
     } catch (e) { setError(e.message); }
-    setSaving(false);
+    setIsSaving(false);
   };
 
   const handleDelete = async () => {
@@ -114,7 +114,7 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
     } catch (e) { alert(e.message); }
   };
 
-  if (editing) {
+  if (isEditing) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-2 my-1">
         <div className="grid grid-cols-2 gap-2">
@@ -149,13 +149,13 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
         <div className="flex gap-2 justify-end">
-          <button onClick={() => setEditing(false)}
+          <button onClick={() => setIsEditing(false)}
             className="text-xs text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition">
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={saving}
+          <button onClick={handleSave} disabled={isSaving}
             className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-1.5 rounded-lg flex items-center gap-1 transition">
-            {saving ? '...' : <><Check className="w-3 h-3" /> Guardar</>}
+            {isSaving ? '...' : <><Check className="w-3 h-3" /> Guardar</>}
           </button>
         </div>
       </div>
@@ -179,7 +179,7 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
         )}
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-        <button onClick={() => setEditing(true)}
+        <button onClick={() => setIsEditing(true)}
           className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
           <Pencil className="w-3.5 h-3.5" />
         </button>
@@ -194,19 +194,19 @@ function ProblemRow({ problem, token, onUpdated, onDeleted }) {
 
 /* ─── Formulario agregar problema ─────────────────────────────── */
 function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
-  const [form, setForm] = useState({ code: '', name: '', priority: 'Media', resolution_hours: 8, description: '' });
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState('');
+  const [form,     setForm]     = useState({ code: '', name: '', priority: 'Media', resolution_hours: 8, description: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [error,    setError]    = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setIsSaving(true);
     setError('');
     try {
       const createdProblem = await api.createProblem(token, { ...form, category_id: categoryId });
       onAdded(createdProblem);
     } catch (e) { setError(e.message); }
-    setSaving(false);
+    setIsSaving(false);
   };
 
   return (
@@ -249,9 +249,9 @@ function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
           className="text-xs text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition">
           Cancelar
         </button>
-        <button type="submit" disabled={saving}
+        <button type="submit" disabled={isSaving}
           className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold px-4 py-1.5 rounded-lg flex items-center gap-1 transition">
-          {saving ? '...' : <><Plus className="w-3 h-3" /> Agregar</>}
+          {isSaving ? '...' : <><Plus className="w-3 h-3" /> Agregar</>}
         </button>
       </div>
     </form>
@@ -260,18 +260,22 @@ function AddProblemForm({ token, categoryId, onAdded, onCancel }) {
 
 /* ─── Tarjeta de categoría ─────────────────────────────────── */
 function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted }) {
-  const [expanded, setExpanded] = useState(false);
-  const [problems, setProblems] = useState(null);
-  const [loadingP, setLoadingP] = useState(false);
-  const [addingP,  setAddingP]  = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [isExpanded,       setIsExpanded]       = useState(false);
+  const [problems,         setProblems]         = useState(null);
+  const [isLoadingProblems, setIsLoadingProblems] = useState(false);
+  const [isAddingProblem,  setIsAddingProblem]  = useState(false);
+  const [isDeleting,       setIsDeleting]       = useState(false);
 
   const toggleExpand = async () => {
-    setExpanded(v => !v);
+    setIsExpanded(v => !v);
     if (!problems) {
-      setLoadingP(true);
-      try { setProblems(await api.getProblems(token, category.id)); } catch {}
-      setLoadingP(false);
+      setIsLoadingProblems(true);
+      try {
+        setProblems(await api.getProblems(token, category.id));
+      } catch (err) {
+        console.error('[CatalogPage] Error al cargar problemas:', err);
+      }
+      setIsLoadingProblems(false);
     }
   };
 
@@ -279,13 +283,13 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
     if (!confirm(
       `¿Eliminar la categoría "${category.name}"?\n\nSe eliminarán también todos sus problemas y sugerencias. Los tickets existentes de esta categoría no se eliminarán pero perderán la referencia.`
     )) return;
-    setDeleting(true);
+    setIsDeleting(true);
     try {
       await api.deleteCategory(token, category.id);
       onCategoryDeleted(category.id);
     } catch (e) {
       alert(e.message);
-      setDeleting(false);
+      setIsDeleting(false);
     }
   };
 
@@ -294,7 +298,7 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
       {/* Header de categoría */}
       <div className="flex items-center gap-2 p-4">
         <button onClick={toggleExpand} className="text-slate-400 hover:text-slate-600 transition shrink-0">
-          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
 
         <FolderOpen className="w-4 h-4 text-blue-500 shrink-0" />
@@ -318,7 +322,7 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
           </button>
           <button
             onClick={handleDelete}
-            disabled={deleting}
+            disabled={isDeleting}
             className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 px-2.5 py-1.5 rounded-lg transition disabled:opacity-40"
             title="Eliminar categoría"
           >
@@ -329,9 +333,9 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
       </div>
 
       {/* Lista de problemas */}
-      {expanded && (
+      {isExpanded && (
         <div className="border-t border-slate-100 px-4 pb-3">
-          {loadingP ? (
+          {isLoadingProblems ? (
             <p className="text-xs text-slate-400 py-3">Cargando problemas...</p>
           ) : (
             <div className="divide-y divide-slate-50">
@@ -350,16 +354,16 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
             </div>
           )}
 
-          {addingP ? (
+          {isAddingProblem ? (
             <AddProblemForm
               token={token}
               categoryId={category.id}
-              onAdded={p => { setProblems(prev => [...(prev || []), p]); setAddingP(false); }}
-              onCancel={() => setAddingP(false)}
+              onAdded={p => { setProblems(prev => [...(prev || []), p]); setIsAddingProblem(false); }}
+              onCancel={() => setIsAddingProblem(false)}
             />
           ) : (
             <button
-              onClick={() => setAddingP(true)}
+              onClick={() => setIsAddingProblem(true)}
               className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-semibold transition"
             >
               <Plus className="w-3.5 h-3.5" /> Agregar problema
@@ -374,20 +378,20 @@ function CategoryCard({ category, token, onCategoryUpdated, onCategoryDeleted })
 /* ─── Página principal ──────────────────────────────────────── */
 export default function CatalogPage({ session }) {
   const { token } = session;
-  const [categories, setCategories] = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [globalError, setGlobalError] = useState('');
+  const [categories,    setCategories]    = useState([]);
+  const [isLoading,     setIsLoading]     = useState(true);
+  const [globalError,   setGlobalError]   = useState('');
 
   // Modal state
-  const [modal, setModal]       = useState(null); // null | { mode: 'create' } | { mode: 'edit', category }
-  const [modalSaving, setModalSaving] = useState(false);
-  const [modalError,  setModalError]  = useState('');
+  const [modal,         setModal]         = useState(null); // null | { mode: 'create' } | { mode: 'edit', category }
+  const [isModalSaving, setIsModalSaving] = useState(false);
+  const [modalError,    setModalError]    = useState('');
 
   useEffect(() => {
     api.getCategories(token)
       .then(setCategories)
       .catch(() => setGlobalError('No se pudieron cargar las categorías.'))
-      .finally(() => setLoading(false));
+      .finally(() => setIsLoading(false));
   }, [token]);
 
   const openCreate = () => { setModal({ mode: 'create' }); setModalError(''); };
@@ -399,7 +403,7 @@ export default function CatalogPage({ session }) {
   };
 
   const handleModalSave = async (form) => {
-    setModalSaving(true);
+    setIsModalSaving(true);
     setModalError('');
     try {
       if (modal.mode === 'create') {
@@ -411,7 +415,7 @@ export default function CatalogPage({ session }) {
       }
       closeModal();
     } catch (e) { setModalError(e.message); }
-    setModalSaving(false);
+    setIsModalSaving(false);
   };
 
   return (
@@ -456,7 +460,7 @@ export default function CatalogPage({ session }) {
         </div>
       )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-20">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -491,7 +495,7 @@ export default function CatalogPage({ session }) {
           initial={modal.mode === 'edit' ? modal.category : null}
           onSave={handleModalSave}
           onClose={closeModal}
-          saving={modalSaving}
+          saving={isModalSaving}
           error={modalError}
         />
       )}

@@ -96,28 +96,28 @@ function TicketCard({ t }) {
 }
 
 function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hideFilters, onBack }) {
-  const [tickets, setTickets] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [filter,  setFilter]  = useState(initialFilter || null);
-  const [apiError, setApiError] = useState(null);
+  const [tickets,   setTickets]   = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter,    setFilter]    = useState(initialFilter || null);
+  const [apiError,  setApiError]  = useState(null);
 
   useEffect(() => {
     setTickets(null);
-    setLoading(true);
+    setIsLoading(true);
     setApiError(null);
     fetchFn(token)
       .then(data => {
         if (!Array.isArray(data)) {
           setApiError(`Respuesta inesperada: ${JSON.stringify(data)}`);
-          setLoading(false);
+          setIsLoading(false);
           return;
         }
         setTickets(data);
-        setLoading(false);
+        setIsLoading(false);
       })
       .catch(err => {
         setApiError(err.message || 'Error al cargar tickets');
-        setLoading(false);
+        setIsLoading(false);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -151,7 +151,7 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
         </div>
       </div>
 
-      {!loading && tickets && !hideFilters && (
+      {!isLoading && tickets && !hideFilters && (
         <div className="flex gap-2 flex-wrap">
           {['pending', 'in_progress', 'resolved'].map(st => (
             <button
@@ -177,7 +177,7 @@ function TicketsDetailView({ token, title, subtitle, fetchFn, initialFilter, hid
         </div>
       )}
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -212,16 +212,20 @@ function UserTicketsDetail({ token, userName, userId, initialFilter, onBack }) {
 export default function ReportsPage({ session }) {
   const { token } = session;
   const [data,          setData]         = useState(null);
-  const [loading,       setLoading]      = useState(true);
+  const [isLoading,     setIsLoading]    = useState(true);
   const [detailUser,    setDetailUser]   = useState(null);
   const [detailAgent,   setDetailAgent]  = useState(null);
   const [detailStatus,  setDetailStatus] = useState(null);
   const [statusFilter,  setStatusFilter] = useState(null);
 
   const load = async () => {
-    setLoading(true);
-    try { setData(await api.getReports(token)); } catch {}
-    setLoading(false);
+    setIsLoading(true);
+    try {
+      setData(await api.getReports(token));
+    } catch (err) {
+      console.error('[ReportsPage] Error al cargar reportes:', err);
+    }
+    setIsLoading(false);
   };
 
   useEffect(() => { load(); }, [token]);
@@ -266,7 +270,7 @@ export default function ReportsPage({ session }) {
     );
   }
 
-  if (loading) return (
+  if (isLoading) return (
     <div className="flex justify-center py-24">
       <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>

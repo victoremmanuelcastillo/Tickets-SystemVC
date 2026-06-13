@@ -11,11 +11,11 @@ export default function AIPage({ session }) {
   const [probId,       setProbId]       = useState('');
   const [currentSug,   setCurrentSug]   = useState('');
   const [generated,    setGenerated]    = useState('');
-  const [loading,      setLoading]      = useState(false);
-  const [saving,       setSaving]       = useState(false);
-  const [copied,       setCopied]       = useState(false);
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [isSaving,     setIsSaving]     = useState(false);
+  const [isCopied,     setIsCopied]     = useState(false);
   const [error,        setError]        = useState('');
-  const [saved,        setSaved]        = useState(false);
+  const [isSaved,      setIsSaved]      = useState(false);
 
   const selectedProb = problems.find(problem => problem.id === parseInt(probId));
 
@@ -31,42 +31,42 @@ export default function AIPage({ session }) {
 
   useEffect(() => {
     if (!probId) { setCurrentSug(''); setGenerated(''); return; }
-    setSaved(false);
+    setIsSaved(false);
     api.getSuggestions(token, probId).then(sug => setCurrentSug(sug[0]?.content || ''));
   }, [probId, token]);
 
   const handleGenerate = async () => {
     if (!selectedProb) return;
-    setLoading(true);
+    setIsLoading(true);
     setError('');
     setGenerated('');
-    setSaved(false);
+    setIsSaved(false);
     try {
       const { suggestion } = await api.aiSuggest(token, selectedProb.name, currentSug);
       setGenerated(suggestion);
     } catch (err) {
       setError(err.message);
     }
-    setLoading(false);
+    setIsLoading(false);
   };
 
   const handleSave = async () => {
     if (!generated || !probId) return;
-    setSaving(true);
+    setIsSaving(true);
     try {
       await api.createSuggestion(token, { problem_id: parseInt(probId), content: generated });
-      setSaved(true);
+      setIsSaved(true);
       setCurrentSug(generated);
     } catch (err) {
       setError(err.message);
     }
-    setSaving(false);
+    setIsSaving(false);
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generated);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -129,10 +129,10 @@ export default function AIPage({ session }) {
         {/* Generate button */}
         <button
           onClick={handleGenerate}
-          disabled={loading || !probId}
+          disabled={isLoading || !probId}
           className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2"
         >
-          {loading ? (
+          {isLoading ? (
             <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generando...</>
           ) : (
             <><Sparkles className="w-4 h-4" /> {currentSug ? 'Mejorar sugerencia con IA' : 'Generar sugerencia con IA'}</>
@@ -155,7 +155,7 @@ export default function AIPage({ session }) {
                 <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Propuesta de Claude</span>
               </div>
               <button onClick={handleCopy} className="text-emerald-600 hover:text-emerald-800 transition">
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
             <div className="p-4 bg-white">
@@ -164,16 +164,16 @@ export default function AIPage({ session }) {
             <div className="px-4 pb-4 bg-white">
               <button
                 onClick={handleSave}
-                disabled={saving || saved}
+                disabled={isSaving || isSaved}
                 className={`w-full font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition ${
-                  saved
+                  isSaved
                     ? 'bg-green-100 text-green-700 cursor-default'
                     : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md disabled:opacity-50'
                 }`}
               >
-                {saving ? (
+                {isSaving ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : saved ? (
+                ) : isSaved ? (
                   <><Check className="w-4 h-4" /> Guardado como sugerencia</>
                 ) : (
                   <><Plus className="w-4 h-4" /> Agregar como sugerencia</>

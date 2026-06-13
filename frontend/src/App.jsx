@@ -6,15 +6,17 @@ import AgentLayout from './pages/agent/AgentLayout.jsx';
 import { ToastProvider } from './components/ui/ToastContext.jsx';
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [session,   setSession]   = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('st_session');
       if (saved) setSession(JSON.parse(saved));
-    } catch {}
-    setLoading(false);
+    } catch (err) {
+      console.error('[App] Sesión guardada corrupta, ignorando:', err);
+    }
+    setIsLoading(false);
   }, []);
 
   const handleLogin = (user, token) => {
@@ -28,7 +30,7 @@ export default function App() {
     localStorage.removeItem('st_session');
   };
 
-  if (loading) return (
+  if (isLoading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>

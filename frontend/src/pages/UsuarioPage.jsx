@@ -3,12 +3,12 @@ import { LogOut, Ticket, Send, CheckCircle, ChevronDown, User, ClipboardList, Pl
 import { api } from '../lib/api.js';
 import { PRIORITY_COLOR, STATUS_COLOR } from '../lib/constants.js';
 
-// En UsuarioPage el STATUS_LABEL tiene estructura {label, color} — se construye
-// combinando las constantes importadas para no duplicar los colores
-const STATUS_LABEL = {
-  pending:     { label: 'En espera',  color: STATUS_COLOR.pending },
-  in_progress: { label: 'En proceso', color: STATUS_COLOR.in_progress },
-  resolved:    { label: 'Resuelto',   color: STATUS_COLOR.resolved },
+// Mapa local de status para la vista usuario: combina STATUS_CONFIG de constants.js
+// con un label alternativo ('En espera' en lugar de 'Pendiente').
+const STATUS_LABEL_USUARIO = {
+  pending:     { label: 'En espera',  colorClass: STATUS_COLOR.pending },
+  in_progress: { label: 'En proceso', colorClass: STATUS_COLOR.in_progress },
+  resolved:    { label: 'Resuelto',   colorClass: STATUS_COLOR.resolved },
 };
 
 function QueueBadge({ token, ticketId, status }) {
@@ -94,11 +94,11 @@ function TicketNotes({ token, ticketId }) {
 }
 
 function TicketCard({ ticket, token }) {
-  const st = STATUS_LABEL[ticket.status] || STATUS_LABEL.pending;
+  const st = STATUS_LABEL_USUARIO[ticket.status] || STATUS_LABEL_USUARIO.pending;
   const date = new Date(ticket.created_at).toLocaleDateString('es-MX', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
-  const [showNotes, setShowNotes] = useState(false);
+  const [isShowingNotes, setIsShowingNotes] = useState(false);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
@@ -119,7 +119,7 @@ function TicketCard({ ticket, token }) {
             </div>
             <p className="text-sm font-semibold text-slate-800 truncate">{ticket.problem_name}</p>
           </div>
-          <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${st.color}`}>
+          <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${st.colorClass}`}>
             {st.label}
           </span>
         </div>
@@ -156,17 +156,17 @@ function TicketCard({ ticket, token }) {
 
         {/* Toggle seguimiento */}
         <button
-          onClick={() => setShowNotes(v => !v)}
+          onClick={() => setIsShowingNotes(v => !v)}
           className="w-full flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
         >
           <span className="flex items-center gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
             Seguimiento del equipo TI
           </span>
-          {showNotes ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          {isShowingNotes ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
-        {showNotes && (
+        {isShowingNotes && (
           <div className="pt-1">
             <TicketNotes token={token} ticketId={ticket.id} />
           </div>
@@ -179,13 +179,13 @@ function TicketCard({ ticket, token }) {
 export default function UsuarioPage({ session, onLogout }) {
   const { user, token } = session;
   const [tab, setTab] = useState('new'); // 'new' | 'history'
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Cierra el dropdown al hacer clic fuera
   useEffect(() => {
     const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -199,8 +199,8 @@ export default function UsuarioPage({ session, onLogout }) {
   const [probId,     setProbId]    = useState('');
   const [info,       setInfo]      = useState('');
   const [otherDesc,  setOtherDesc] = useState('');
-  const [loading,   setLoading]  = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isLoading,   setIsLoading]   = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [error,     setError]    = useState('');
   const isOther = catId === 'otro';
   const selectedProblem = problems.find(problem => problem.id === parseInt(probId));
@@ -247,7 +247,7 @@ export default function UsuarioPage({ session, onLogout }) {
     if (!catId) return;
     if (!isOther && !probId) return;
     if (isOther && !otherDesc.trim()) return;
-    setLoading(true);
+    setIsLoading(true);
     setError('');
     try {
       const body = { additional_info: info || null };
@@ -258,22 +258,22 @@ export default function UsuarioPage({ session, onLogout }) {
         body.problem_id  = parseInt(probId);
       }
       await api.createTicket(token, body);
-      setSubmitted(true);
+      setIsSubmitted(true);
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleNew = () => {
-    setSubmitted(false);
+    setIsSubmitted(false);
     setCatId(''); setProbId(''); setInfo(''); setOtherDesc(''); setSuggestions([]);
     setProblems([]);
   };
 
   // --- Submitted screen ---
-  if (submitted) return (
+  if (isSubmitted) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="text-center max-w-sm">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -307,7 +307,7 @@ export default function UsuarioPage({ session, onLogout }) {
         {/* Avatar con dropdown */}
         <div className="relative shrink-0" ref={menuRef}>
           <button
-            onClick={() => setMenuOpen(o => !o)}
+            onClick={() => setIsMenuOpen(o => !o)}
             className="flex items-center gap-2 hover:opacity-80 transition"
           >
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
@@ -317,18 +317,18 @@ export default function UsuarioPage({ session, onLogout }) {
               <p className="text-white text-xs font-semibold leading-none">{user.name}</p>
               {user.area && <p className="text-slate-400 text-[10px] mt-0.5">{user.area}</p>}
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Dropdown */}
-          {menuOpen && (
+          {isMenuOpen && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50">
               <div className="px-3 py-2 border-b border-slate-100">
                 <p className="text-xs font-semibold text-slate-700 truncate">{user.name}</p>
                 <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
               </div>
               <button
-                onClick={() => { setTab('history'); setMenuOpen(false); }}
+                onClick={() => { setTab('history'); setIsMenuOpen(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
               >
                 <ClipboardList className="w-4 h-4 text-slate-400" />
@@ -340,7 +340,7 @@ export default function UsuarioPage({ session, onLogout }) {
                 )}
               </button>
               <button
-                onClick={() => { setTab('new'); setMenuOpen(false); }}
+                onClick={() => { setTab('new'); setIsMenuOpen(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
               >
                 <Plus className="w-4 h-4 text-slate-400" />
@@ -509,10 +509,10 @@ export default function UsuarioPage({ session, onLogout }) {
 
                 <button
                   type="submit"
-                  disabled={loading || !catId || (!isOther && !probId) || (isOther && !otherDesc.trim())}
+                  disabled={isLoading || !catId || (!isOther && !probId) || (isOther && !otherDesc.trim())}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2"
                 >
-                  {loading
+                  {isLoading
                     ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     : <><Send className="w-4 h-4" /> Enviar ticket</>
                   }

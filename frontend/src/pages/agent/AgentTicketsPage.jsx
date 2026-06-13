@@ -35,7 +35,9 @@ function CreateTicketModal({ session, onClose, onCreated }) {
     setIsSearching(true);
     try {
       setResults(await api.searchUsers(token, query));
-    } catch {}
+    } catch (err) {
+      console.error('[AgentTicketsPage] Error al buscar usuarios:', err);
+    }
     setIsSearching(false);
   };
 

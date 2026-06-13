@@ -23,23 +23,27 @@ export default function UsersPage({ session }) {
   const { token, user: me } = session;
   const isPrimary = me.is_primary_admin === true;
 
-  const [users,    setUsers]    = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [error,    setError]    = useState('');
-  const [success,  setSuccess]  = useState('');
-  const [editingId, setEditingId] = useState(null);
+  const [users,         setUsers]         = useState([]);
+  const [isLoading,     setIsLoading]     = useState(true);
+  const [isShowingForm, setIsShowingForm] = useState(false);
+  const [error,         setError]         = useState('');
+  const [success,       setSuccess]       = useState('');
+  const [editingId,     setEditingId]     = useState(null);
   const [editSpecialty, setEditSpecialty] = useState('');
-  const [editRole, setEditRole] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [editRole,      setEditRole]      = useState('');
+  const [isSaving,      setIsSaving]      = useState(false);
 
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'usuario', area: '', specialty: '' });
   const [formSaving, setFormSaving] = useState(false);
 
   const load = async () => {
-    setLoading(true);
-    try { setUsers(await api.getUsers(token)); } catch {}
-    setLoading(false);
+    setIsLoading(true);
+    try {
+      setUsers(await api.getUsers(token));
+    } catch (err) {
+      console.error('[UsersPage] Error al cargar usuarios:', err);
+    }
+    setIsLoading(false);
   };
 
   useEffect(() => { load(); }, [token]);
@@ -52,7 +56,7 @@ export default function UsersPage({ session }) {
       await api.register(token, form);
       setSuccess(`Usuario "${form.name}" creado correctamente.`);
       setForm({ name: '', email: '', password: '', role: 'usuario', area: '', specialty: '' });
-      setShowForm(false);
+      setIsShowingForm(false);
       load();
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
@@ -80,7 +84,7 @@ export default function UsersPage({ session }) {
   const cancelEdit = () => { setEditingId(null); };
 
   const handleSaveEdit = async (u) => {
-    setSaving(true);
+    setIsSaving(true);
     setError('');
     try {
       const body = { specialty: editSpecialty || null };
@@ -93,7 +97,7 @@ export default function UsersPage({ session }) {
     } catch (err) {
       setError(err.message);
     }
-    setSaving(false);
+    setIsSaving(false);
   };
 
   return (
@@ -104,10 +108,10 @@ export default function UsersPage({ session }) {
           <p className="text-slate-500 text-sm mt-0.5">{users.length} cuentas registradas</p>
         </div>
         <button
-          onClick={() => setShowForm(v => !v)}
+          onClick={() => setIsShowingForm(v => !v)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm"
         >
-          {showForm ? <><X className="w-4 h-4" /> Cancelar</> : <><UserPlus className="w-4 h-4" /> Nuevo usuario</>}
+          {isShowingForm ? <><X className="w-4 h-4" /> Cancelar</> : <><UserPlus className="w-4 h-4" /> Nuevo usuario</>}
         </button>
       </div>
 
@@ -123,7 +127,7 @@ export default function UsersPage({ session }) {
       )}
 
       {/* Create form */}
-      {showForm && (
+      {isShowingForm && (
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mb-5">
           <h2 className="font-bold text-slate-800 mb-4">Crear nuevo usuario</h2>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -190,7 +194,7 @@ export default function UsersPage({ session }) {
       )}
 
       {/* Users list */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-20">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -306,10 +310,10 @@ export default function UsersPage({ session }) {
                     </button>
                     <button
                       onClick={() => handleSaveEdit(user)}
-                      disabled={saving}
+                      disabled={isSaving}
                       className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-1.5 rounded-lg flex items-center gap-1.5 transition"
                     >
-                      {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      {isSaving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                       Guardar
                     </button>
                   </div>
